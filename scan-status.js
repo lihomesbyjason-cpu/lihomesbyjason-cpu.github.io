@@ -14,21 +14,18 @@
       `<span class="tiny">${STATUS.note}</span></div>`;
   }
   function inject(){
-    const page=window.state?.page;
-    if(page!=='dashboard'&&page!=='history') return;
-    const root=document.getElementById(page);
-    if(!root||root.querySelector('#scanStatusNotice')) return;
+    const root=document.querySelector('.page.active');
+    if(!root || !['dashboard','history'].includes(root.id)) return;
+    if(root.querySelector('#scanStatusNotice')) return;
     const top=root.querySelector('.top');
     if(top) top.insertAdjacentHTML('afterend',box());
     else root.insertAdjacentHTML('afterbegin',box());
   }
-  try{
-    if(typeof render==='function'){
-      const originalRender=render;
-      render=function(){originalRender();queueMicrotask(inject)};
-    }
-  }catch(e){console.warn('scan status hook',e)}
+  function scheduleInject(){setTimeout(inject,0)}
   window.addEventListener('load',()=>setTimeout(inject,250));
-  const observer=new MutationObserver(()=>inject());
-  observer.observe(document.documentElement,{subtree:true,childList:true});
+  document.addEventListener('click',e=>{
+    if(e.target.closest?.('[data-page]')) setTimeout(inject,50);
+  },true);
+  const observer=new MutationObserver(scheduleInject);
+  observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
 })();
